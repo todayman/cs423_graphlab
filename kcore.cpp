@@ -4,6 +4,7 @@ using namespace graphlab;
 #include <sstream>
 #include <string>
 using namespace std;
+#include <unistd.h>
 
 
 typedef distributed_graph<empty, empty> graph_type;
@@ -15,7 +16,10 @@ public:
 	{
 		stringstream strm;
 		//strm << "Process id: " << dc.procid() << " : " << mpi_tools::rank() << " / " << mpi_tools::size() << "\n";
-		return strm.str();
+		char name[81];
+		gethostname(name, 80);
+		name[80] = 0;
+		return string(name) + "\n";
 	}
 	std::string save_edge(graph_type::edge_type e)
 	{
@@ -29,12 +33,11 @@ int main(int argc, char* argv[])
 
 	distributed_control dc;
 	graph_type graph(dc);
-	graph.load_format("graph.txt", "adj");
+	graph.load_format("hdfs://ip-10-149-6-179/paul/graph.txt", "adj");
 
 	dc.cout() << "Hello World from " << dc.procid() << "( " << mpi_tools::rank() << ") / " << mpi_tools::size() << "!\n";
 
-	graph.save("output.txt", graph_writer(), false, true, false);
-	sleep(4000);
+	graph.save("hdfs://ip-10-149-6-179/paul/output.txt", graph_writer(), false, true, false);
 
 	mpi_tools::finalize();
 
