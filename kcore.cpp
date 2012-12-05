@@ -94,7 +94,7 @@ int main(int argc, char* argv[])
 	engine.start();
 
 	//graph.save("hdfs://ip-10-149-6-179/paul/output.txt", graph_writer(), false, true, false);
-	graph.save("/home/ubuntu/paul/output.txt", graph_writer(), false, true, false);
+	//graph.save("/home/ubuntu/paul/output.txt", graph_writer(), false, true, false);
 
 	dc.cout() << "Did " << engine.num_updates() << " updates in " << engine.iteration() << " iterations\n";
 	mpi_tools::finalize();
