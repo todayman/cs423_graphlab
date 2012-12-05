@@ -6,8 +6,16 @@ using namespace graphlab;
 using namespace std;
 #include <unistd.h>
 
+struct vertex {
+	bool in_core;
+	
+	vertex() : in_core(true) { }
+	
+	void save(oarchive& oarc) const { }
+	void load(iarchive& iarc) { }
+};
 
-typedef distributed_graph<empty, empty> graph_type;
+typedef distributed_graph<vertex, empty> graph_type;
 
 class graph_writer
 {
