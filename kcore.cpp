@@ -6,7 +6,7 @@ using namespace graphlab;
 using namespace std;
 #include <unistd.h>
 
-#define KCORE_DEGREE	2
+#define KCORE_DEGREE	10
 
 struct vertex {
 	bool in_core;
@@ -32,16 +32,23 @@ public:
 
 	void apply(icontext_type& context, vertex_type& vertex, const gather_type& total) {
 		if( total <  KCORE_DEGREE ) {
-			in_core = false;
-			changed += 1;
+			vertex.data().in_core = false;
+			vertex.data().changed += 1;
 		}
 	}
 
+	
 	edge_dir_type scatter_edges(icontext_type& context, const vertex_type& vertex) const {
-		if( changed == 1 ) {
+		if( vertex.data().changed == 1 ) {
+			return OUT_EDGES;
 		}
 		else {
 			return NO_EDGES;
+		}
+	}
+	void scatter(icontext_type& context, const vertex_type& vertex, edge_type& edge) const {
+		if( edge.target().data().in_core ) {
+			context.signal(edge.target());
 		}
 	}
 };
@@ -53,10 +60,15 @@ public:
 	{
 		stringstream strm;
 		//strm << "Process id: " << dc.procid() << " : " << mpi_tools::rank() << " / " << mpi_tools::size() << "\n";
-		char name[81];
+		/*char name[81];
 		gethostname(name, 80);
-		name[80] = 0;
-		return string(name) + "\n";
+		name[80] = 0;*/
+		if( v.data().in_core ) {
+			return string("1\n");
+		}
+		else {
+			return string();
+		}
 	}
 	std::string save_edge(graph_type::edge_type e)
 	{
@@ -70,16 +82,21 @@ int main(int argc, char* argv[])
 
 	distributed_control dc;
 	graph_type graph(dc);
-	graph.load_format("hdfs://ip-10-149-6-179/paul/graph.txt", "adj");
+	//char hostname[80];
+	//gethostname(hostname, 80);
+	//graph.load_format("hdfs://ip-10-149-6-179/data/M87141220.tsv", "tsv");
+	graph.load_format("/home/ubuntu/M87141220.tsv", "tsv");
 
-	dc.cout() << "Hello World from " << dc.procid() << "( " << mpi_tools::rank() << ") / " << mpi_tools::size() << "!\n";
+	//dc.cout() << "Hello World from " << dc.procid() << "( " << mpi_tools::rank() << ") / " << mpi_tools::size() << "!\n";
 
 	omni_engine<kcore_program> engine(dc, graph, "sync");
 	engine.signal_all();
 	engine.start();
 
-	graph.save("hdfs://ip-10-149-6-179/paul/output.txt", graph_writer(), false, true, false);
+	//graph.save("hdfs://ip-10-149-6-179/paul/output.txt", graph_writer(), false, true, false);
+	graph.save("/home/ubuntu/paul/output.txt", graph_writer(), false, true, false);
 
+	dc.cout() << "Did " << engine.num_updates() << " updates in " << engine.iteration() << " iterations\n";
 	mpi_tools::finalize();
 
 	return 0;
